@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<style>
+    .body-background {
+        background: rgb(1, 177, 136);
+        background: linear-gradient(45deg, #01b188, #0183cb 100%);
+        background-size: 400% 400%;
+        animation: gradient 14s ease infinite;
+    }
+
+    @keyframes gradient {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    .painel-form {
+        padding: 8% 0 0;
+        margin: auto;
+    }
+
+    .form {
+        position: relative;
+        z-index: 1;
+        background: #FFFFFF;
+        max-width: 75vw;
+        margin: 0 auto 100px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
+        border-radius: 25px;
+    }
+
+    .img-logo {
+        width: 20%;
+        margin: auto;
+        margin-bottom: 1rem;
+    }
+
+    .label-form {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #3d535e;
+    }
+
+    .button-group {
+        margin-top: 1.5rem;
+    }
+
+    .table-panel {
+        margin-top: 2rem;
+    }
+
+    .table-title {
+        font-size: 1.35rem;
+        font-weight: 500;
+        margin-bottom: 0.2rem;
+        color: #3d535e;
+    }
+
+    .table-head {
+        background: rgb(1, 177, 136);
+        background: linear-gradient(145deg, rgba(1, 177, 136, 0.250) 0%, rgba(1, 132, 203, 0.250) 100%);
+    }
+
+    .btn-export-xls {
+        margin-top: 0.5rem;
+        margin-bottom: 0.2rem;
+        margin-left: 15px;
+        margin-right: 15px;    
+    }
+
+    .icon-excel{
+        color: #01b188;
+    }
+</style>
+
+<!-- Exemplo Json: [{"id":1,"idade":3},{"id":2,"idade":5}] -->
+
+<body class="body-background">
+    <div class="painel-form">
+        <div class="form">
+            <div class="row">
+                <img class="img-logo" src="https://yardim.com.br/images/logo-yardim.png">
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="label-form">Json</label>
+                    <textarea class="form-control" id="json"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="label-form">CSV</label>
+                    <textarea class="form-control" id="CSV" disabled></textarea>
+                </div>
+            </div>
+            <div class="row button-group">
+                <div class="col-md-12">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="ConvertToCsv()">Converter <i
+                            class="fa fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <div class="row table-panel" style="display: none;" id="table-panel">
+                <div class="col-md-12 table-title">
+                    Resultado
+                </div>
+
+                <div class="row btn-export-xls">
+                    <button type="button" class="btn btn-sm btn-secundary float-left" onclick="ExportTableExcel()"><i
+                            class="fa fa-file-excel-o icon-excel"></i> Exportar</button>
+                </div>
+
+                <div class="col-md-12">
+                    <table class="table">
+                        <thead class="table-head">
+                            <tr>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-12 button-group">
+                    <button type="button" class="btn btn-sm btn-secundary" onclick="LimparCampos()"><i
+                            class="fa fa-eraser"></i> Limpar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    function ConvertToCsv() {
+        var json = document.getElementById("json").value;
+
+        if (json.trim() == "") {
+            LimparCampos()
+            alert('Favor inserir o Json a ser convertido')
+            return false
+        }
+        try {
+            var array = JSON.stringify(json);
+            array = JSON.parse(json);
+            var arr = [Object.keys(array[0])].concat(array);
+
+            var csv = arr.map(a => {
+                return Object.values(a).toString()
+            }).join('\n')
+
+            document.getElementById("CSV").value = csv;
+
+            var element = document.createElement('a');
+            element.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+            element.target = '_blank';
+            element.download = 'Export_Csv';
+            element.click();
+
+            LimparTable();
+
+            var trHead = document.querySelector('table thead tr');
+            var tBody = document.querySelector('table tbody');
+            csv = csv.split('\n');
+            csv[0].split(',').forEach((item) => {
+                trHead.insertCell().outerHTML = `<th>${item}</th>`
+            });
+            csv.splice(0, 1);
+            var tBodyHtml = "";
+            csv.forEach((item) => {
+                var trHtml = "<tr><td>";
+                trHtml += item.split(',').join('</td><td>').concat('</td></tr>');
+                tBodyHtml += trHtml;
+            });
+            tBody.innerHTML = tBodyHtml;
+
+            document.getElementById("table-panel").style.display = "block";
+        }
+        catch (e) {
+            LimparCampos()
+            alert('Favor inserir um Json válido.')
+        }
+    }
+
+    function LimparCampos() {
+        document.getElementById("json").value = '';
+        document.getElementById("CSV").value = '';
+        LimparTable();
+    }
+
+    function LimparTable() {
+        document.querySelector('table thead tr').innerHTML = '';
+        document.querySelector('table tbody').innerHTML = '';
+
+        document.getElementById("table-panel").style.display = "none";
+    }
+
+    function ExportTableExcel() {
+        if (document.querySelector('table tbody tr') == null) {
+            alert('Não há dados para serem extraídos da tabela.');
+            return false
+        }
+        var htmls = "";
+        var uri = 'data:application/vnd.ms-excel;base64,';
+        var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>';
+        var base64 = function (s) {
+            return window.btoa(unescape(encodeURIComponent(s)))
+        };
+
+        var format = function (s, c) {
+            return s.replace(/{(\w+)}/g, function (m, p) {
+                return c[p];
+            })
+        };
+
+        htmls = document.querySelector('table').innerHTML;
+
+        var ctx = {
+            worksheet: 'Worksheet',
+            table: htmls
+        }
+
+        var link = document.createElement("a");
+        link.download = "Export_Xls";
+        link.href = uri + base64(format(template, ctx));
+        link.click();
+    }
+</script>
+
+</html>
